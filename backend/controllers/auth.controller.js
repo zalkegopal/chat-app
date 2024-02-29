@@ -12,7 +12,6 @@ export const signupUser = async (req, res) => {
 
     const user = await User.findOne({ username });
 
-    console.log("mongoose user", user);
     if (user) {
       res.status(400).json({ error: "Username already exist" });
     }
@@ -52,7 +51,6 @@ export const signupUser = async (req, res) => {
 };
 
 export const loginUser = async (req, res) => {
-  console.log('loginUSer', req.body)
   try {
     const { username, password } = req.body;
     const user = await User.findOne({ username });

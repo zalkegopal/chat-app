@@ -1,5 +1,6 @@
 import Conversation from "../models/conversation.model.js";
 import Message from "../models/message.model.js";
+import { getReceiverSocketId, io } from "../socket/socket.js";
 
 export const sendMessage = async (req, res) => {
   try {
@@ -27,11 +28,15 @@ export const sendMessage = async (req, res) => {
       conversation.messages.push(newMessage._id);
     }
 
-    // await newMessage.save();
-    // await conversation.save();
-
     // this will run in parallel
     await Promise.all([conversation.save(), newMessage.save()]);
+
+    // socket io functionality to send message to users
+    const receiverSocketId = getReceiverSocketId(receiverId);
+    if(receiverSocketId) {
+      // io.to(<socket_id>).emit() used to send events to specific client
+      io.to(receiverSocketId).emit("newMessage", newMessage)
+    }
 
     res.status(200).json(newMessage);
   } catch (error) {
@@ -47,12 +52,14 @@ export const getMessages = async (req, res) => {
 
     const conversation = await Conversation.findOne({
       participants: { $all: [senderId, userToChatId] },
-    }).populate("messages");
+    }).populate("messages");  // Get actuall message list
 
-    if(!conversation) res.status(200).json([]);
-    
-    const messages = conversation.messages;
-    res.status(200).json({ result: conversation.messages})
+    if (!conversation) {
+      res.status(200).json([]);
+    } else {
+      const messages = conversation.messages;
+      res.status(200).json(messages);
+    }
   } catch (error) {
     console.log("Error in getMessages controller", error.message);
     res.status(500).json({ error: "Internal server error " });
