@@ -1,4 +1,5 @@
 
+React.js chat app using Node.js and socket.io
 
 #Running server
 
